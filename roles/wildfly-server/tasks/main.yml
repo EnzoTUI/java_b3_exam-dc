@@ -1,0 +1,59 @@
+- name: Installation du jdk8
+  package: name=openjdk-8-jdk-headless state=present
+
+- name: Creation de l'utilisateur wildfly
+  user:
+    name: '{{wildfly_user}}'
+    shell: /bin/dalse
+    system: yes
+    home: '{{wildfly_home}}'
+
+- name: Vérification de l'existence du dossier /etc/wildfly
+  file:
+    path: '{{wildfly_etc}}'
+    owner: '{{wildfly_user}}'
+    state: directory
+    recurse: yes
+
+- name: Téléchargement et extraction de l'archive wildfly
+  unarchive:
+    src: '{{wildfly_url}}'
+    dest: '{{wildfly_home}}'
+    owner: '{{wildfly_user}}'
+    remote_src: yes
+    creates: '{{wildfly_path}}'
+
+- name: Création du lien symolique
+  file:
+    src: '{{wildfly_path}}'
+    dest: '{{wildfly_opt}}'
+    owner: '{{wildfly_user}}'
+    state: link
+
+- name: Copie du fichier de conf de wildfly
+  copy:
+    src: '{{wildfly_conf}}'
+    dest: '{{wildfly_etc}}'
+    owner: '{{wildfly_user}}'
+    remote_src: yes
+
+- name: Copie du fichier de service de wildfly
+  copy:
+    src: '{{wildfly_service}}'
+    dest: '{{systemd_path}}'
+    owner: '{{wildfly_user}}'
+    remote_src: yes
+
+- name: Copie du fichier de lancement de wildfly
+  copy:
+    src: '{{wildfly_launcher}}'
+    dest: '{{wildfly_bin}}'
+    owner: '{{wildfly_user}}'
+    mode: 0755
+    remote_src: yes
+
+- name: Démarrage du service wildfly
+  systemd:
+    state: restarted
+    daemon_reload: yes
+    name: wildfly
